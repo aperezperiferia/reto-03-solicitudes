@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Registro de proveedor</title>
+  <style>
+    :root{color-scheme:light dark;--bg:#f4f7f6;--card:#fff;--text:#15231a;--muted:#526158;--border:#d7e3da;--green:#15601d;--green-soft:#eef7f0;--warning:#ca7a00;--warning-bg:#fff7e6}
+    @media(prefers-color-scheme:dark){:root{--bg:#101713;--card:#18231c;--text:#edf5ee;--muted:#b0beb3;--border:#314738;--green:#6dfd8c;--green-soft:#193525;--warning:#ffc561;--warning-bg:#352b16}}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,sans-serif}main{max-width:900px;margin:auto;padding:28px}.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin:12px 0}.user{border-left:4px solid var(--green);white-space:pre-wrap}.assistant{border-left:4px solid #79a985;padding:22px 24px;line-height:1.65}.assistant h2{font-size:18px;margin:0 0 14px}.assistant h3{font-size:15px;margin:20px 0 8px;color:var(--green)}.assistant p{margin:8px 0}.assistant ul{margin:8px 0 12px;padding-left:22px}.assistant li{margin:5px 0}.assistant hr{border:0;border-top:1px solid var(--border);margin:18px 0}.assistant code{padding:2px 5px;border-radius:4px;background:var(--green-soft);color:var(--text);font:12px ui-monospace,monospace}.confirm{border:2px solid var(--warning);background:var(--warning-bg)}.thinking{display:flex;align-items:center;gap:11px;color:var(--muted);font-weight:600}.spinner{width:19px;height:19px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}form{display:flex;gap:8px;margin-top:18px}input{flex:1;padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text)}button{background:var(--green);color:#fff;border:0;border-radius:8px;padding:12px 18px;cursor:pointer}small,.muted{color:var(--muted)}.tool{padding:0;overflow:hidden}.tool-head{display:flex;gap:10px;align-items:center;padding:12px 14px;background:var(--green-soft)}.tool-icon{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;font-weight:700}.tool-title{font-weight:700}.status{margin-left:auto;font-size:12px;font-weight:700;color:var(--green)}.tool-body{padding:14px}.metrics{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}.metric{padding:5px 9px;border:1px solid var(--border);border-radius:999px;font-size:13px}.metric strong{margin-left:4px}.result-table{width:100%;border-collapse:collapse;font-size:13px}.result-table th,.result-table td{padding:8px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}.result-table th{color:var(--muted);font-weight:600}.value{word-break:break-word}.tag{display:inline-block;padding:2px 7px;border-radius:99px;background:var(--green-soft);color:var(--green);font-size:12px;font-weight:700}.attention{background:var(--warning-bg);color:var(--warning)}details{margin-top:10px}summary{cursor:pointer;color:var(--muted);font-size:13px}pre{margin:8px 0 0;padding:10px;overflow:auto;background:var(--bg);border-radius:8px;font:12px/1.4 ui-monospace,monospace;white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Registro como proveedor</h1>
+    <small>Ejemplo: Procesa el caso "ec-corp-andina". No envíes nada todavía.</small>
+    <section id="chat"></section>
+    <form id="form"><input id="message" autocomplete="off" placeholder="Escribe una solicitud" aria-label="Escribe una solicitud"><button>Enviar</button></form>
+  </main>
+  <script>
+    const chat=document.querySelector('#chat'),form=document.querySelector('#form'),input=document.querySelector('#message');
+    let sessionId=crypto.randomUUID();
+    const add=(content,kind='card')=>{const el=document.createElement('article');el.className='card '+kind;if(kind==='assistant'||kind==='confirm')renderReply(el,content);else el.textContent=content;chat.append(el);el.scrollIntoView({behavior:'smooth'});};
+    function renderReply(container,content){
+      const fragment=document.createDocumentFragment();let list=null;
+      const flush=()=>{if(list){fragment.append(list);list=null}};
+      const normalized=content
+        .replaceAll('### ','\n\n### ')
+        .replaceAll('## ','\n\n## ')
+        .replace(/\s+\*\s+/g,'\n* ')
+        .replace(/\s+---\s+/g,'\n---\n');
+      for(const raw of normalized.split('\n')){const line=raw.trim();if(!line){flush();continue}if(line.startsWith('### ')){flush();const h=document.createElement('h3');h.textContent=line.slice(4);fragment.append(h);continue}if(line.startsWith('## ')){flush();const h=document.createElement('h2');h.textContent=line.slice(3);fragment.append(h);continue}if(line.startsWith('---')){flush();fragment.append(document.createElement('hr'));continue}if(/^[-*] /.test(line)){if(!list){list=document.createElement('ul')}const item=document.createElement('li');formatInline(item,line.replace(/^[-*] /,''));list.append(item);continue}flush();const paragraph=document.createElement('p');formatInline(paragraph,line);fragment.append(paragraph)}flush();container.classList.add('assistant');container.append(fragment)}
+    function formatInline(element,value){const parts=value.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);parts.forEach(part=>{if(/^\*\*.*\*\*$/.test(part)){const strong=document.createElement('strong');strong.textContent=part.slice(2,-2);element.append(strong)}else if(/^\*.*\*$/.test(part)){const emphasis=document.createElement('em');emphasis.textContent=part.slice(1,-1);element.append(emphasis)}else if(/^`.*`$/.test(part)){const code=document.createElement('code');code.textContent=part.slice(1,-1);element.append(code)}else{element.append(document.createTextNode(part))}}) }
+    const safeParse=value=>{try{return JSON.parse(value)}catch{return null}};
+    const text=value=>value===undefined||value===null?'—':typeof value==='object'?JSON.stringify(value):String(value);
+    function toolCard(call){
+      const result=safeParse(call.summary)||{};const data=result.data||{};const tool=document.createElement('article');tool.className='card tool';
+      const head=document.createElement('header');head.className='tool-head';head.innerHTML='<span class="tool-icon">✓</span><div><div class="tool-title">'+call.name.replace('proveedor_','').replaceAll('_',' ')+'</div><small>Herramienta ejecutada</small></div><span class="status">'+(result.ok===false?'REVISAR':'COMPLETADA')+'</span>';tool.append(head);
+      const body=document.createElement('div');body.className='tool-body';
+      const rows=[];const metrics=[];
+      if(Array.isArray(data.llenos)){metrics.push(['Campos llenos',data.llenos.length]);metrics.push(['Faltantes',(data.faltantes||[]).length]);metrics.push(['Por confirmar',(data.requiere_confirmacion||[]).length]);rows.push(...data.llenos.map(x=>({campo:x.etiqueta,estado:'Lleno',valor:x.valor,fuente:x.clave})),...(data.faltantes||[]).map(x=>({campo:x.etiqueta,estado:'Faltante',valor:x.nota,fuente:'—'})),...(data.requiere_confirmacion||[]).map(x=>({campo:x.etiqueta,estado:'Confirmar',valor:x.valor,fuente:x.nota||x.clave})));}
+      else if(Array.isArray(data.campos)){metrics.push(['Campos solicitados',data.campos.length]);metrics.push(['Soportes exigidos',(data.soportes||[]).length]);rows.push(...data.campos.map(x=>({campo:x.etiqueta,estado:x.obligatorio===false?'Opcional':'Requerido',valor:'',fuente:''})));}
+      else if(Array.isArray(data.checklist)){metrics.push(['Estado',data.listo_para_firma?'Listo para firma':'Bloqueado']);rows.push(...data.checklist.map(x=>({campo:x.tipo,estado:x.estado,valor:x.vigencia_hasta||'—',fuente:x.archivo||'—'})));}
+      else if(data.ruta){metrics.push(['Archivo generado',data.ruta]);}
+      if(metrics.length){const metricBox=document.createElement('div');metricBox.className='metrics';metrics.forEach(([label,value])=>{const chip=document.createElement('span');chip.className='metric';chip.textContent=label+': ';const strong=document.createElement('strong');strong.textContent=value;chip.append(strong);metricBox.append(chip)});body.append(metricBox)}
+      if(rows.length){const table=document.createElement('table');table.className='result-table';table.innerHTML='<thead><tr><th>Campo</th><th>Estado</th><th>Valor / detalle</th><th>Fuente</th></tr></thead>';const tbody=document.createElement('tbody');rows.forEach(row=>{const tr=document.createElement('tr');[row.campo,row.estado,row.valor,row.fuente].forEach((value,index)=>{const td=document.createElement('td');if(index===1){const tag=document.createElement('span');tag.className='tag '+(/Faltante|Confirmar|vencido|ausente/i.test(text(value))?'attention':'');tag.textContent=text(value);td.append(tag)}else{td.className='value';td.textContent=text(value)}tr.append(td)});tbody.append(tr)});table.append(tbody);body.append(table)}
+      if(!metrics.length&&!rows.length){const line=document.createElement('p');line.className='muted';line.textContent=result.error||'Ejecución completada.';body.append(line)}
+      const details=document.createElement('details');details.innerHTML='<summary>Ver datos técnicos</summary>';const pre=document.createElement('pre');pre.textContent=JSON.stringify({argumentos:call.arguments,resultado:result},null,2);details.append(pre);body.append(details);tool.append(body);chat.append(tool);tool.scrollIntoView({behavior:'smooth'});
+    }
+    form.addEventListener('submit',async event=>{event.preventDefault();const message=input.value.trim();if(!message)return;add(message,'user');input.value='';const pending=document.createElement('article');pending.className='card thinking';pending.innerHTML='<span class="spinner" aria-hidden="true"></span><span>Analizando solicitud y preparando herramientas…</span>';chat.append(pending);try{const response=await fetch('/api/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sessionId,message})});const data=await response.json();pending.remove();(data.toolCalls||[]).forEach(toolCard);add(data.reply,data.needsConfirmation?'confirm':'assistant')}catch{pending.textContent='No fue posible contactar el servidor.'}});
+  </script>
+</body>
+</html>
