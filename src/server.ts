@@ -37,7 +37,7 @@ function createAdapter(provider: Provider): LlmAdapter | undefined {
 
 function send(res: import("node:http").ServerResponse, code: number, body: unknown): void { res.writeHead(code, { "content-type": "application/json; charset=utf-8" }); res.end(JSON.stringify(body)); }
 function caseFrom(text: string): string | undefined { return text.match(/(?:caso\s+)?["']?([a-z]{2}-[a-z0-9-]+)["']?/i)?.[1]; }
-function summarize(value: unknown): string { const raw = JSON.stringify(value); return raw.length > 400 ? `${raw.slice(0, 397)}...` : raw; }
+function summarize(value: unknown): string { return JSON.stringify(value); }
 async function invoke<K extends keyof typeof tools>(name: K, args: Parameters<(typeof tools)[K]["execute"]>[0], ctx: ToolContext, calls: ToolCall[]): Promise<Record<string, unknown>> { const response = JSON.parse(await tools[name].execute(args as never, ctx)) as Record<string, unknown>; calls.push({ name, arguments: args as Record<string, unknown>, summary: summarize(response) }); return response; }
 async function processCase(caso: string, ctx: ToolContext, calls: ToolCall[]): Promise<{ reply: string; needsConfirmation: boolean }> {
   const solicitud = await invoke("proveedor_leer_solicitud", { caso }, ctx, calls); if (!solicitud.ok) return { reply: `No pude leer el caso ${caso}: ${String(solicitud.error)}`, needsConfirmation: false };
