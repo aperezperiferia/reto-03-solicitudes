@@ -14,6 +14,8 @@ Abre `http://localhost:3000`. Sin clave, `LLM_PROVIDER=deterministic` procesa de
 
 ## Despliegue en Render
 
+Prueba la aplicación en: https://reto-03-solicitudes.onrender.com
+
 1. En Render, crea un **Blueprint** y conecta el repositorio GitHub.
 2. Selecciona `render.yaml`.
 3. En el servicio creado, define `GEMINI_API_KEY` como secreto de entorno desde el panel de Render.
