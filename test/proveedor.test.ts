@@ -5,6 +5,7 @@ import path from "node:path";
 import { armar_paquete, generar_formulario, leer_solicitud, limpiarSalida, mapear_campos, simular_envio } from "../src/tools/proveedor.js";
 import { providerTools, runLlmAgent } from "../src/agent.js";
 import type { LlmAdapter } from "../src/llm/adapter.js";
+import { ProviderUnavailableError } from "../src/llm/optional.js";
 
 const directory = process.cwd();
 const ctx = { directory, sessionId: "test" };
@@ -36,6 +37,12 @@ test("el agente valida argumentos y bloquea la simulación de envío solicitada 
   assert.match(result.reply, /máximo de iteraciones/);
   assert.equal(result.toolCalls.length, 0);
   assert.ok(providerTools().every((tool) => tool.schema.type === "object"));
+});
+
+test("identifica indisponibilidad del proveedor sin confundirla con errores funcionales", () => {
+  const error = new ProviderUnavailableError("saturado");
+  assert.equal(error instanceof Error, true);
+  assert.equal(error.message, "saturado");
 });
 
 test("el ciclo conserva las llamadas de función hasta recibir la respuesta final", async () => {

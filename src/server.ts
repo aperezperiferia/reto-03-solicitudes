@@ -5,7 +5,7 @@ import path from "node:path";
 import { z } from "zod";
 import { runLlmAgent, type VisibleToolCall } from "./agent.js";
 import type { ChatMessage, LlmAdapter } from "./llm/adapter.js";
-import { GeminiLlm, OpenAiLlm } from "./llm/optional.js";
+import { GeminiLlm, OpenAiLlm, ProviderUnavailableError } from "./llm/optional.js";
 import { armar_paquete, generar_formulario, leer_solicitud, mapear_campos, simular_envio, type ToolContext } from "./tools/proveedor.js";
 
 type ToolCall = VisibleToolCall;
@@ -95,10 +95,17 @@ const server = createServer(async (req, res) => {
           else result = { reply: "Indica “Procesa el caso \"co-industrias-delta\"” para iniciar. El modo local funciona sin clave de modelo.", needsConfirmation: false };
           session.history.push({ role: "user", content: message }, { role: "assistant", content: result.reply });
         }
-      } catch (error) {
-        result = { reply: error instanceof Error ? error.message : "No fue posible procesar la solicitud.", needsConfirmation: false };
-        session.history.push({ role: "user", content: message }, { role: "assistant", content: result.reply });
-      }
+        } catch (error) {
+          const caso = caseFrom(message);
+          if (error instanceof ProviderUnavailableError && caso && /(procesa|procesar|caso|prepara|preparar)/i.test(message)) {
+            result = await processCase(caso, ctx, calls);
+            result.reply = `Gemini no está disponible temporalmente; procesé el caso con el flujo determinista.\n\n${result.reply}`;
+            if (result.needsConfirmation) session.pendingSendCase = caso;
+          } else {
+            result = { reply: error instanceof Error ? error.message : "No fue posible procesar la solicitud.", needsConfirmation: false };
+          }
+          session.history.push({ role: "user", content: message }, { role: "assistant", content: result.reply });
+        }
     }
     session.history = session.history.slice(-maxMessages); sessions.set(sessionId, session); return send(res, 200, { ...result, toolCalls: calls });
   }

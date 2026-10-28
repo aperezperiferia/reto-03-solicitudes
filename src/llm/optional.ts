@@ -4,6 +4,8 @@ import type { ChatMessage, LlmAdapter, LlmResponse, ToolDefinition } from "./ada
 
 const timeoutMs = 15_000;
 
+export class ProviderUnavailableError extends Error {}
+
 function parsedToolCalls(output: Array<{ type?: string; call_id?: string; name?: string; arguments?: string }>): LlmResponse["toolCalls"] {
   return output.flatMap((item) => item.type === "function_call" && item.call_id && item.name && item.arguments
     ? [{ id: item.call_id, name: item.name, arguments: item.arguments }]
@@ -69,7 +71,8 @@ export class GeminiLlm implements LlmAdapter {
       if (error instanceof Error) {
         const message = error.message.replace(/AIza[\w-]+/g, "[clave oculta]");
         if (/API key|API_KEY|unauthenticated|invalid.*key/i.test(message)) throw new Error("Gemini rechazó la clave API. Verifica que esté activa y autorizada para Gemini Developer API.");
-        if (/model|not found|404/i.test(message)) throw new Error(`Gemini no encontró o no permite el modelo configurado (${this.model}). Prueba con GEMINI_MODEL=gemini-flash-latest.`);
+        if (/high demand|unavailable|503/i.test(message)) throw new ProviderUnavailableError("Gemini está temporalmente saturado.");
+        if (/model|not found|404/i.test(message)) throw new Error(`Gemini no encontró o no permite el modelo configurado (${this.model}). Verifica el modelo disponible en tu proyecto.`);
         if (/quota|rate|429/i.test(message)) throw new Error("Gemini rechazó la solicitud por cuota o límite de uso. Revisa la cuota de tu proyecto.");
         if (/403|permission/i.test(message)) throw new Error("Gemini denegó permisos a esta clave. Habilita Gemini Developer API o crea una clave del proyecto correcto.");
         if (/fetch|network|timeout|ECONN/i.test(message)) throw new Error("No fue posible conectar con Gemini. Verifica conexión, proxy o firewall.");
