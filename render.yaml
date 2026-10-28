@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: reto-03-solicitudes
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run typecheck
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: GEMINI_MODEL
+        value: gemini-flash-lite-latest
+      - key: MAX_AGENT_ITERATIONS
+        value: "25"
+      - key: MAX_SESSION_MESSAGES
+        value: "60"
+      - key: GEMINI_API_KEY
+        sync: false

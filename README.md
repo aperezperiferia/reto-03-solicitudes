@@ -12,6 +12,15 @@ npm run dev
 
 Abre `http://localhost:3000`. Sin clave, `LLM_PROVIDER=deterministic` procesa de forma reproducible: `Procesa el caso "ec-corp-andina". No envíes nada todavía.`
 
+## Despliegue en Render
+
+1. En Render, crea un **Blueprint** y conecta el repositorio GitHub.
+2. Selecciona `render.yaml`.
+3. En el servicio creado, define `GEMINI_API_KEY` como secreto de entorno desde el panel de Render.
+4. Despliega. Render asigna `PORT` automáticamente; no lo configures manualmente.
+
+El Blueprint deja activo `LLM_PROVIDER=gemini` y `GEMINI_MODEL=gemini-flash-lite-latest`. La clave no se versiona ni se expone al frontend.
+
 ## LLM opcional
 
 Copia `.env.example` a `.env`. El servidor selecciona exclusivamente uno de estos proveedores:
