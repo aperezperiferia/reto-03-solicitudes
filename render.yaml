@@ -10,7 +10,7 @@ services:
       - key: LLM_PROVIDER
         value: gemini
       - key: GEMINI_MODEL
-        value: gemini-flash-lite-latest
+        value: gemini-flash-latest
       - key: MAX_AGENT_ITERATIONS
         value: "25"
       - key: MAX_SESSION_MESSAGES

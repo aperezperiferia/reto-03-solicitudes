@@ -37,3 +37,21 @@ test("el agente valida argumentos y bloquea la simulación de envío solicitada 
   assert.equal(result.toolCalls.length, 0);
   assert.ok(providerTools().every((tool) => tool.schema.type === "object"));
 });
+
+test("el ciclo conserva las llamadas de función hasta recibir la respuesta final", async () => {
+  let invocation = 0;
+  const adapter: LlmAdapter = {
+    enviar: async (_prompt, messages) => {
+      invocation += 1;
+      if (invocation === 1) return { content: "", toolCalls: [{ id: "call-1", name: "proveedor_leer_solicitud", arguments: "{\"caso\":\"ec-corp-andina\"}" }] };
+      const assistant = messages.find((message) => message.role === "assistant");
+      const tool = messages.find((message) => message.role === "tool");
+      assert.equal(assistant?.functionCalls?.[0]?.name, "proveedor_leer_solicitud");
+      assert.equal(tool?.toolCallId, "call-1");
+      return { content: "Resumen final preparado.", toolCalls: [] };
+    }
+  };
+  const result = await runLlmAgent({ adapter, directory, history: [], message: "procesa", maxIterations: 3 });
+  assert.equal(result.reply, "Resumen final preparado.");
+  assert.equal(result.toolCalls.length, 1);
+});

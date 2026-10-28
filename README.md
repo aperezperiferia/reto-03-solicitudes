@@ -19,7 +19,7 @@ Abre `http://localhost:3000`. Sin clave, `LLM_PROVIDER=deterministic` procesa de
 3. En el servicio creado, define `GEMINI_API_KEY` como secreto de entorno desde el panel de Render.
 4. Despliega. Render asigna `PORT` automáticamente; no lo configures manualmente.
 
-El Blueprint deja activo `LLM_PROVIDER=gemini` y `GEMINI_MODEL=gemini-flash-lite-latest`. La clave no se versiona ni se expone al frontend.
+El Blueprint deja activo `LLM_PROVIDER=gemini` y `GEMINI_MODEL=gemini-flash-latest`. La clave no se versiona ni se expone al frontend.
 
 ## LLM opcional
 

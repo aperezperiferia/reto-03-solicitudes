@@ -65,7 +65,7 @@ export async function runLlmAgent(params: { adapter: LlmAdapter; directory: stri
       const reply = response.content || "No recibí una respuesta del modelo.";
       return { reply, history: [...messages, { role: "assistant", content: reply }], toolCalls: visible };
     }
-    messages.push({ role: "assistant", content: response.content || "Solicito herramientas." });
+    messages.push({ role: "assistant", content: response.content || "", functionCalls: response.toolCalls });
     for (const toolCall of response.toolCalls) {
       const output = await callTool(toolCall.name, toolCall.arguments, ctx, visible);
       messages.push({ role: "tool", content: output, toolCallId: toolCall.id, toolName: toolCall.name });

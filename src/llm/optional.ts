@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, type Content, type Part } from "@google/genai";
 import OpenAI from "openai";
 import type { ChatMessage, LlmAdapter, LlmResponse, ToolDefinition } from "./adapter.js";
 
@@ -39,9 +39,19 @@ export class GeminiLlm implements LlmAdapter {
 
   async enviar(systemPrompt: string, messages: ChatMessage[], tools: ToolDefinition[]): Promise<LlmResponse> {
     const client = new GoogleGenAI({ apiKey: this.apiKey });
-    const contents = messages.map((message) => message.role === "tool"
-      ? { role: "user", parts: [{ functionResponse: { name: message.toolName ?? "unknown", response: { output: JSON.parse(message.content) } } }] }
-      : { role: message.role === "assistant" ? "model" : "user", parts: [{ text: message.content }] });
+    const contents: Content[] = messages.flatMap<Content>((message) => {
+      if (message.role === "tool") {
+        return [{ role: "user" as const, parts: [{ functionResponse: { id: message.toolCallId, name: message.toolName ?? "unknown", response: { output: JSON.parse(message.content) } } }] }];
+      }
+      if (message.role === "assistant") {
+        const parts: Part[] = [
+          ...(message.content ? [{ text: message.content }] : []),
+          ...(message.functionCalls ?? []).map((call) => ({ functionCall: { id: call.id, name: call.name, args: JSON.parse(call.arguments) } }))
+        ];
+        return parts.length ? [{ role: "model" as const, parts }] : [];
+      }
+      return [{ role: "user" as const, parts: [{ text: message.content }] }];
+    });
     try {
       const response = await client.models.generateContent({
         model: this.model,
@@ -59,7 +69,7 @@ export class GeminiLlm implements LlmAdapter {
       if (error instanceof Error) {
         const message = error.message.replace(/AIza[\w-]+/g, "[clave oculta]");
         if (/API key|API_KEY|unauthenticated|invalid.*key/i.test(message)) throw new Error("Gemini rechazó la clave API. Verifica que esté activa y autorizada para Gemini Developer API.");
-        if (/model|not found|404/i.test(message)) throw new Error(`Gemini no encontró o no permite el modelo configurado (${this.model}). Prueba con GEMINI_MODEL=gemini-flash-lite-latest.`);
+        if (/model|not found|404/i.test(message)) throw new Error(`Gemini no encontró o no permite el modelo configurado (${this.model}). Prueba con GEMINI_MODEL=gemini-flash-latest.`);
         if (/quota|rate|429/i.test(message)) throw new Error("Gemini rechazó la solicitud por cuota o límite de uso. Revisa la cuota de tu proyecto.");
         if (/403|permission/i.test(message)) throw new Error("Gemini denegó permisos a esta clave. Habilita Gemini Developer API o crea una clave del proyecto correcto.");
         if (/fetch|network|timeout|ECONN/i.test(message)) throw new Error("No fue posible conectar con Gemini. Verifica conexión, proxy o firewall.");

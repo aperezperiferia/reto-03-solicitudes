@@ -31,7 +31,7 @@ function createAdapter(provider: Provider): LlmAdapter | undefined {
   }
   if (provider === "gemini") {
     if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY es obligatoria cuando LLM_PROVIDER=gemini");
-    return new GeminiLlm(process.env.GEMINI_API_KEY, process.env.GEMINI_MODEL ?? "gemini-flash-lite-latest");
+    return new GeminiLlm(process.env.GEMINI_API_KEY, process.env.GEMINI_MODEL ?? "gemini-flash-latest");
   }
 }
 
@@ -55,7 +55,7 @@ async function processCase(caso: string, ctx: ToolContext, calls: ToolCall[]): P
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
   if (req.method === "GET" && url.pathname === "/api/health") {
-    try { const provider = configuredProvider(); return send(res, 200, { ok: true, provider, model: provider === "openai" ? process.env.OPENAI_MODEL ?? "gpt-4.1-mini" : provider === "gemini" ? process.env.GEMINI_MODEL ?? "gemini-flash-lite-latest" : "none" }); } catch (error) { return send(res, 500, { ok: false, error: error instanceof Error ? error.message : "Configuración inválida" }); }
+    try { const provider = configuredProvider(); return send(res, 200, { ok: true, provider, model: provider === "openai" ? process.env.OPENAI_MODEL ?? "gpt-4.1-mini" : provider === "gemini" ? process.env.GEMINI_MODEL ?? "gemini-flash-latest" : "none" }); } catch (error) { return send(res, 500, { ok: false, error: error instanceof Error ? error.message : "Configuración inválida" }); }
   }
   if (req.method === "GET" && url.pathname.startsWith("/api/sessions/")) return send(res, 200, sessions.get(decodeURIComponent(url.pathname.slice(14))) ?? { history: [] });
   if (req.method === "GET" && url.pathname === "/") { res.writeHead(200, { "content-type": "text/html; charset=utf-8" }); res.end(await readFile(path.join(directory, "web", "index.html"))); return; }
