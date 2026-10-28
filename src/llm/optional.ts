@@ -71,11 +71,10 @@ export class GeminiLlm implements LlmAdapter {
       if (error instanceof Error) {
         const message = error.message.replace(/AIza[\w-]+/g, "[clave oculta]");
         if (/API key|API_KEY|unauthenticated|invalid.*key/i.test(message)) throw new Error("Gemini rechazó la clave API. Verifica que esté activa y autorizada para Gemini Developer API.");
-        if (/high demand|unavailable|503/i.test(message)) throw new ProviderUnavailableError("Gemini está temporalmente saturado.");
+        if (/high demand|unavailable|503|fetch|network|timeout|ECONN/i.test(message)) throw new ProviderUnavailableError("Gemini no está disponible temporalmente.");
         if (/model|not found|404/i.test(message)) throw new Error(`Gemini no encontró o no permite el modelo configurado (${this.model}). Verifica el modelo disponible en tu proyecto.`);
         if (/quota|rate|429/i.test(message)) throw new Error("Gemini rechazó la solicitud por cuota o límite de uso. Revisa la cuota de tu proyecto.");
         if (/403|permission/i.test(message)) throw new Error("Gemini denegó permisos a esta clave. Habilita Gemini Developer API o crea una clave del proyecto correcto.");
-        if (/fetch|network|timeout|ECONN/i.test(message)) throw new Error("No fue posible conectar con Gemini. Verifica conexión, proxy o firewall.");
       }
       throw new Error("Gemini no pudo procesar la solicitud. Revisa la configuración del proveedor.");
     }
